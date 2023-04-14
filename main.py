@@ -35,7 +35,7 @@ def final_process(data1: List[int], data2: List[int]) -> List[int]:
     """TODO: Document this function. What does it do? What are the inputs and outputs?"""
     return np.mean([x - y for x, y in zip(data1, data2)])
 
-offload_url = 'http://localhost:5000' # TODO: Change this to the IP address of your server
+offload_url = 'http://10.0.2.15:5000' # TODO: Change this to the IP address of your server
 
 def run(offload: Optional[str] = None) -> float:
     """Run the program, offloading the specified function(s) to the server.
@@ -55,7 +55,7 @@ def run(offload: Optional[str] = None) -> float:
         def offload_process1(data):
             nonlocal data1
             # TODO: Send a POST request to the server with the input data
-            response = requests.post(offload_url + '/process1', json=data)
+            response = requests.post(f"{offload_url}/process1", json=data)
             data1 = response.json()
         thread = threading.Thread(target=offload_process1, args=(data,))
         thread.start()
@@ -71,7 +71,7 @@ def run(offload: Optional[str] = None) -> float:
         data2 = None
         def offload_process2(data):
             nonlocal data2
-            response = requests.post(offload_url + '/process2', json=data)
+            response = requests.post(f"{offload_url}/process2", json=data)
             data2 = response.json()
         thread = threading.Thread(target=offload_process2, args=(data,))
         thread.start()
@@ -82,15 +82,20 @@ def run(offload: Optional[str] = None) -> float:
         # TODO: Implement this case
         data1 = None
         data2 = None
-        def offload_both(data):
-            nonlocal data1, data2
-            response1 = requests.post(offload_url + '/process1', json=data)
+        def offload_process1(data):
+            nonlocal data1
+            response1 = requests.post(f"{offload_url}/process1", json=data)
             data1 = response1.json()
-            response2 = requests.post(offload_url + '/process2', json=data)
+        def offload_process2(data):
+            nonlocal data2
+            response2 = requests.post(f"{offload_url}/process2", json=data)
             data2 = response2.json()
-        thread = threading.Thread(target=offload_both, args=(data,))
-        thread.start()
-        thread.join()
+        thread1 = threading.Thread(target=offload_process1, args=(data,))
+        thread2 = threading.Thread(target=offload_process2, args=(data,))
+        thread1.start()
+        thread2.start()
+        thread1.join()
+        thread2.join()
         pass
 
     ans = final_process(data1, data2)
@@ -101,6 +106,7 @@ def main():
     #   Compute the mean and standard deviation of the execution times
     #   Hint: store the results in a pandas DataFrame, use previous labs as a reference
     modes = [None, 'process1', 'process2', 'both']
+
     results = []
     for mode in modes:
         times = []
@@ -111,7 +117,7 @@ def main():
             times.append(end_time - start_time)
         mean_time = np.mean(times)
         std_time = np.std(times)
-        results.append([mode, mean_time, std_time])
+        results.append([str(mode), mean_time, std_time])
      
     df = pd.DataFrame(results, columns = ["mode", "mean_time", "std_time"])
 
@@ -125,8 +131,8 @@ def main():
         title="Makespans by Mode",
         labels={
             "mode": "Offloading Mode",
-            "mean_time": "Makespan (ms)",
-            "std_time": "Standard Deviation (ms)"
+            "mean_time": "Makespan (s)",
+            "std_time": "Standard Deviation (s)"
         }
     )
 
