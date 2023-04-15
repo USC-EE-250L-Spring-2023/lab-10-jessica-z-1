@@ -134,7 +134,7 @@ def main():
             "mean_time": "Makespan (s)",
             "std_time": "Standard Deviation (s)"
         }
-    )
+    ) 
 
     # TODO: save plot to "makespan.png"
     fig.write_image("makespan.png")
